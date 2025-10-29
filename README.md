@@ -259,6 +259,125 @@ catch (error) {
 
 ---
 
+## 💡 Pro Tips & Chrome Internals
+
+### Essential Chrome Pages
+
+**1. `chrome://on-device-internals/` - Your Debug Command Center**
+
+The most important page for Gemini Nano development.
+
+What to check:
+- **Model Status**: See if model is `downloaded`, `available`, or has errors
+- **Event Logs**: Real-time logs of all model interactions (including hidden system prompts!)
+- **Download Progress**: Monitor model download status
+
+**2. `chrome://components/` - Update Center**
+
+Find `Optimization Guide On Device Model` component.
+- Click "Check for update" to force model update
+- Useful when model behaves incorrectly or is outdated
+
+**3. `chrome://flags/` - Enable Experimental Features**
+
+Required flags to enable:
+- `#prompt-api-for-gemini-nano` - Main API flag
+- `#optimization-guide-on-device-model` - Set to `Enabled BypassPrefRequirement`
+- `#enable-experimental-web-platform-features` - Sometimes required
+
+### Quick Console Checks
+
+Test API availability directly in DevTools console (F12):
+
+```javascript
+// Check new API
+await self.ai.languageModel.capabilities()
+// Returns: { available: "readily" | "after-download" | "no" }
+
+// Check if API exists
+'ai' in self && self.ai?.languageModel
+```
+
+### Performance Optimization: Session Caching
+
+**Problem:** Creating new session for each request = 2-3 second delay ("cold start")
+
+**Solution:** Create one long-lived session and reuse it
+
+```javascript
+// ❌ Slow: New session every time
+async function slowApproach(text) {
+  const session = await ai.languageModel.create();  // 2679ms delay!
+  const result = await session.prompt(text);
+  session.destroy();
+  return result;
+}
+
+// ✅ Fast: Reuse cached session
+let cachedSession = null;
+
+async function fastApproach(text) {
+  if (!cachedSession) {
+    cachedSession = await ai.languageModel.create();  // Only once
+  }
+  return await cachedSession.prompt(text);  // ~70ms!
+}
+```
+
+**Result:** 2679ms → 70ms = **38x faster!**
+
+### Streaming for Responsive UI
+
+Show results as they're generated instead of waiting for completion:
+
+```javascript
+// ❌ Blocking: Wait for full response
+const response = await session.prompt('Write a long story...');
+console.log(response);  // User waits...
+
+// ✅ Streaming: Show results in real-time
+const stream = session.promptStreaming('Write a long story...');
+
+for await (const chunk of stream) {
+  console.log(chunk);  // Update UI immediately!
+  // Append chunk to text area in real-time
+}
+```
+
+**User Experience:** Feels instant instead of frozen!
+
+### Advanced: Offscreen Document Pattern
+
+For production Chrome extensions, use an offscreen document to keep session "warm":
+
+```javascript
+// background.js - Create offscreen with warm session
+chrome.offscreen.createDocument({
+  url: 'offscreen.html',
+  reasons: ['WORKERS']
+});
+
+// offscreen.js - Keep session alive
+let session = await ai.languageModel.create();
+
+chrome.runtime.onMessage.addListener((msg, sender, respond) => {
+  if (msg.type === 'prompt') {
+    session.prompt(msg.text).then(respond);
+    return true;
+  }
+});
+
+// popup.js - Instant responses!
+const result = await chrome.runtime.sendMessage({
+  type: 'prompt',
+  text: 'Hello!'
+});
+```
+
+**Benefit:** Zero cold-start delay, instant responses from popup/side panel
+
+---
+
 ## 📊 API Coverage
 
 | API | Status | Test Coverage |
