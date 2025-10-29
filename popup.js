@@ -501,6 +501,7 @@ document.getElementById('test-writer').addEventListener('click', async () => {
 
       appendLog(logId, '\nCreating writer...');
       const writer = await self.ai.writer.create({
+        expectedOutputs: { languages: ['en'] },
         monitor(m) {
           m.addEventListener('downloadprogress', (e) => {
             const pct = Math.round(e.loaded * 100);
@@ -581,6 +582,7 @@ document.getElementById('test-rewriter').addEventListener('click', async () => {
       appendLog(logId, '\nCreating rewriter with formal tone...');
       const rewriter = await self.ai.rewriter.create({
         tone: 'more-formal',
+        expectedOutputs: { languages: ['en'] },
         monitor(m) {
           m.addEventListener('downloadprogress', (e) => {
             const pct = Math.round(e.loaded * 100);
@@ -663,6 +665,7 @@ document.getElementById('test-proofreader').addEventListener('click', async () =
 
       appendLog(logId, '\nCreating proofreader...');
       const proofreader = await self.ai.proofreader.create({
+        expectedOutputs: { languages: ['en'] },
         monitor(m) {
           m.addEventListener('downloadprogress', (e) => {
             const pct = Math.round(e.loaded * 100);
