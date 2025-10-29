@@ -7,5 +7,5 @@
     "default_popup": "popup.html",
     "default_title": "Test AI APIs"
   },
-  "permissions": ["activeTab"]
+  "permissions": ["activeTab", "storage"]
 }
