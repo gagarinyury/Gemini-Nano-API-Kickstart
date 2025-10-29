@@ -472,7 +472,259 @@ document.getElementById('test-detector').addEventListener('click', async () => {
 });
 
 // =============================================================================
-// STEP 4: Full Integration Test
+// STEP 4: Writer Test
+// =============================================================================
+
+document.getElementById('test-writer').addEventListener('click', async () => {
+  const logId = 'writer-log';
+  log(logId, `${formatTimestamp()} Testing Writer API...\n`);
+
+  try {
+    // Try new API (ai.writer)
+    if ('ai' in self && self.ai?.writer) {
+      appendLog(logId, '✓ Found ai.writer (new API)');
+
+      appendLog(logId, '\nChecking capabilities...');
+      const capabilities = await self.ai.writer.capabilities();
+      appendLog(logId, `Capabilities: ${JSON.stringify(capabilities, null, 2)}`);
+
+      const { available } = capabilities;
+
+      if (available === 'no') {
+        appendLog(logId, '\n❌ Writer is NOT available');
+        return;
+      }
+
+      if (available === 'after-download') {
+        appendLog(logId, '\n⏳ Writer model needs download...');
+      }
+
+      appendLog(logId, '\nCreating writer...');
+      const writer = await self.ai.writer.create({
+        monitor(m) {
+          m.addEventListener('downloadprogress', (e) => {
+            const pct = Math.round(e.loaded * 100);
+            appendLog(logId, `  Download progress: ${pct}%`);
+          });
+        }
+      });
+
+      appendLog(logId, '✓ Writer created');
+
+      appendLog(logId, '\nGenerating text with prompt...');
+      const prompt = 'Write a short, engaging introduction for a sci-fi story about space exploration in one paragraph.';
+      const result = await writer.prompt(prompt);
+
+      appendLog(logId, '\n📝 Generated Text:');
+      appendLog(logId, result);
+
+      // Cleanup
+      if (writer.destroy) {
+        await writer.destroy();
+        appendLog(logId, '\n✓ Writer destroyed');
+      }
+
+      appendLog(logId, '\n✅ Writer test PASSED!');
+
+    } else if ('Writer' in self) {
+      appendLog(logId, '✓ Found Writer (legacy API)');
+
+      appendLog(logId, '\nCreating writer...');
+      const writer = await self.Writer.create();
+
+      const prompt = 'Write a short paragraph about AI.';
+      const result = await writer.write(prompt);
+
+      appendLog(logId, '\n📝 Generated Text:');
+      appendLog(logId, result);
+
+      appendLog(logId, '\n✅ Writer test PASSED (legacy API)!');
+
+    } else {
+      appendLog(logId, '❌ Writer API not found');
+    }
+
+  } catch (error) {
+    appendLog(logId, `\n❌ ERROR: ${error.name}: ${error.message}`);
+    console.error('Writer test error:', error);
+  }
+});
+
+// =============================================================================
+// STEP 5: Rewriter Test
+// =============================================================================
+
+document.getElementById('test-rewriter').addEventListener('click', async () => {
+  const logId = 'rewriter-log';
+  log(logId, `${formatTimestamp()} Testing Rewriter API...\n`);
+
+  try {
+    // Try new API (ai.rewriter)
+    if ('ai' in self && self.ai?.rewriter) {
+      appendLog(logId, '✓ Found ai.rewriter (new API)');
+
+      appendLog(logId, '\nChecking capabilities...');
+      const capabilities = await self.ai.rewriter.capabilities();
+      appendLog(logId, `Capabilities: ${JSON.stringify(capabilities, null, 2)}`);
+
+      const { available } = capabilities;
+
+      if (available === 'no') {
+        appendLog(logId, '\n❌ Rewriter is NOT available');
+        return;
+      }
+
+      if (available === 'after-download') {
+        appendLog(logId, '\n⏳ Rewriter model needs download...');
+      }
+
+      appendLog(logId, '\nCreating rewriter with formal tone...');
+      const rewriter = await self.ai.rewriter.create({
+        tone: 'more-formal',
+        monitor(m) {
+          m.addEventListener('downloadprogress', (e) => {
+            const pct = Math.round(e.loaded * 100);
+            appendLog(logId, `  Download progress: ${pct}%`);
+          });
+        }
+      });
+
+      appendLog(logId, '✓ Rewriter created');
+
+      const originalText = 'Hey, we should probably think about getting this done ASAP.';
+      appendLog(logId, '\nOriginal Text:');
+      appendLog(logId, originalText);
+
+      appendLog(logId, '\nRewriting to formal tone...');
+      const result = await rewriter.prompt(originalText);
+
+      appendLog(logId, '\n📝 Rewritten Text:');
+      appendLog(logId, result);
+
+      // Cleanup
+      if (rewriter.destroy) {
+        await rewriter.destroy();
+        appendLog(logId, '\n✓ Rewriter destroyed');
+      }
+
+      appendLog(logId, '\n✅ Rewriter test PASSED!');
+
+    } else if ('Rewriter' in self) {
+      appendLog(logId, '✓ Found Rewriter (legacy API)');
+
+      appendLog(logId, '\nCreating rewriter...');
+      const rewriter = await self.Rewriter.create({ tone: 'more-formal' });
+
+      const originalText = 'Hey, this is cool!';
+      const result = await rewriter.rewrite(originalText);
+
+      appendLog(logId, `\nOriginal: ${originalText}`);
+      appendLog(logId, `Rewritten: ${result}`);
+
+      appendLog(logId, '\n✅ Rewriter test PASSED (legacy API)!');
+
+    } else {
+      appendLog(logId, '❌ Rewriter API not found');
+    }
+
+  } catch (error) {
+    appendLog(logId, `\n❌ ERROR: ${error.name}: ${error.message}`);
+    console.error('Rewriter test error:', error);
+  }
+});
+
+// =============================================================================
+// STEP 6: Proofreader Test
+// =============================================================================
+
+document.getElementById('test-proofreader').addEventListener('click', async () => {
+  const logId = 'proofreader-log';
+  log(logId, `${formatTimestamp()} Testing Proofreader API...\n`);
+
+  try {
+    // Try new API (ai.proofreader)
+    if ('ai' in self && self.ai?.proofreader) {
+      appendLog(logId, '✓ Found ai.proofreader (new API)');
+
+      appendLog(logId, '\nChecking capabilities...');
+      const capabilities = await self.ai.proofreader.capabilities();
+      appendLog(logId, `Capabilities: ${JSON.stringify(capabilities, null, 2)}`);
+
+      const { available } = capabilities;
+
+      if (available === 'no') {
+        appendLog(logId, '\n❌ Proofreader is NOT available');
+        return;
+      }
+
+      if (available === 'after-download') {
+        appendLog(logId, '\n⏳ Proofreader model needs download...');
+      }
+
+      appendLog(logId, '\nCreating proofreader...');
+      const proofreader = await self.ai.proofreader.create({
+        monitor(m) {
+          m.addEventListener('downloadprogress', (e) => {
+            const pct = Math.round(e.loaded * 100);
+            appendLog(logId, `  Download progress: ${pct}%`);
+          });
+        }
+      });
+
+      appendLog(logId, '✓ Proofreader created');
+
+      const testText = 'this sentance has two misteaks in it.';
+      appendLog(logId, '\nTest Text:');
+      appendLog(logId, testText);
+
+      appendLog(logId, '\nChecking for errors...');
+      const errors = await proofreader.check(testText);
+
+      if (errors.length === 0) {
+        appendLog(logId, '\n✓ No errors found');
+      } else {
+        appendLog(logId, `\n📝 Found ${errors.length} error(s):`);
+        errors.forEach((error, index) => {
+          appendLog(logId, `\n  Error ${index + 1}:`);
+          appendLog(logId, `    Text: "${error.text}"`);
+          appendLog(logId, `    Suggestions: ${error.suggestions.join(', ')}`);
+        });
+      }
+
+      // Cleanup
+      if (proofreader.destroy) {
+        await proofreader.destroy();
+        appendLog(logId, '\n✓ Proofreader destroyed');
+      }
+
+      appendLog(logId, '\n✅ Proofreader test PASSED!');
+
+    } else if ('Proofreader' in self) {
+      appendLog(logId, '✓ Found Proofreader (legacy API)');
+
+      appendLog(logId, '\nCreating proofreader...');
+      const proofreader = await self.Proofreader.create();
+
+      const testText = 'this has erors.';
+      const errors = await proofreader.check(testText);
+
+      appendLog(logId, `\nTest text: ${testText}`);
+      appendLog(logId, `Errors found: ${errors.length}`);
+
+      appendLog(logId, '\n✅ Proofreader test PASSED (legacy API)!');
+
+    } else {
+      appendLog(logId, '❌ Proofreader API not found');
+    }
+
+  } catch (error) {
+    appendLog(logId, `\n❌ ERROR: ${error.name}: ${error.message}`);
+    console.error('Proofreader test error:', error);
+  }
+});
+
+// =============================================================================
+// STEP 7: Full Integration Test
 // =============================================================================
 
 document.getElementById('test-all').addEventListener('click', async () => {
@@ -568,7 +820,7 @@ document.getElementById('test-all').addEventListener('click', async () => {
 });
 
 // =============================================================================
-// STEP 5: Spec Validation Tests
+// STEP 8: Spec Validation Tests
 // =============================================================================
 
 document.getElementById('test-spec').addEventListener('click', async () => {
